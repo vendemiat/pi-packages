@@ -29,6 +29,12 @@ export interface LocalUserAuthorizerDeps {
   getPromptPreferences: () => PromptPreferences;
   /** Injected for testability; production callers pass the real function. */
   requestPermissionDecision: typeof requestPermissionDecision;
+  /**
+   * Optional callback fired immediately before the inline permission dialog is
+   * shown, so other extensions (e.g. macOS-notify) can trigger a system
+   * notification. Receives the display title and message text.
+   */
+  notifyBeforePrompt?: (title: string, message: string) => void;
 }
 
 /**
@@ -49,6 +55,11 @@ export class LocalUserAuthorizer implements TerminalAuthorizer {
   ): Promise<PermissionPromptDecision> {
     const uiPrompt = buildUiPrompt(details);
     emitUiPromptEvent(this.deps.events, uiPrompt);
+    // Notify observers (e.g. macos-notify) before the inline dialog appears.
+    const title = details.forwarding
+      ? "Permission Required (Subagent)"
+      : "Permission Required";
+    this.deps.notifyBeforePrompt?.(title, details.message);
     return this.deps.requestPermissionDecision(
       {
         mode: this.deps.mode,

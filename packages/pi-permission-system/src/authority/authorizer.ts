@@ -73,6 +73,11 @@ export interface AuthorizerSelectionDeps {
   /** In-process subagent session registry for forwarding target resolution. */
   registry?: SubagentSessionRegistry;
   logger: DebugReviewLogger;
+  /**
+   * Optional callback fired immediately before the inline permission dialog is
+   * shown, so other extensions can trigger a system notification.
+   */
+  notifyBeforePrompt?: (title: string, message: string) => void;
 }
 
 /**
@@ -94,6 +99,7 @@ export function selectAuthorizer(
       events: deps.events,
       getPromptPreferences: deps.getPromptPreferences,
       requestPermissionDecision: deps.requestPermissionDecision,
+      notifyBeforePrompt: deps.notifyBeforePrompt,
     });
   }
   if (deps.detection.isSubagent(ctx)) {

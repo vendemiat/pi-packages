@@ -122,6 +122,18 @@ export default function piPermissionSystemExtension(pi: ExtensionAPI): void {
     // resolved in config order at activation.
     authorizerRegistry,
     getAuthorizerChain: () => configStore.current().authorizerChain ?? [],
+    // Emit a tool_execution_start event before the inline permission dialog so
+    // notification extensions (e.g. macos-notify) can trigger a system alert.
+    notifyBeforePrompt: (title, message) => {
+      try {
+        pi.events.emit('tool_execution_start', {
+          toolName: 'ask_question',
+          args: { question: message, context: title },
+        });
+      } catch {
+        // Notification emission is best-effort and must not block the prompt.
+      }
+    },
   });
 
   // Resolver composes the manager + session ruleset and owns the
